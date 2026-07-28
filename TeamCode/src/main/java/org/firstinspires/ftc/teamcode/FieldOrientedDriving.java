@@ -136,107 +136,11 @@ public class FieldOrientedDriving extends Hardware {
                 telemetry.addData("mode", "Field Oriented Driving");
             }
 
-
-            //Gamepad Controllers defined
-            // Set motor power based on conditions
-            //Define speed modifiers
             double speedModifier = 1.0; //Default Speed
 
-            // Check bumper conditions
-//            if (gamepad2.left_bumper) {
-//                speedModifier = 0.5; //Slow down to 50% speed
-//            } else if (gamepad2.right_bumper) {
-//                speedModifier = 1.5; // Speed up to 150% speed
-//            } else {
-//                speedModifier = 1.0; //Default speed
-//            }
-
-            // Gamepad2 left stick y turns on SHOOTER
 
 
-            //TODO: FINISH THIS CODE! --> SHOOTER
-            ///////////////////////////////////////////////////////////////////////////////////////
-            // Toggle for 1500 (Left Bumper)
-            if (gamepad2.left_bumper && !lastLB) {
-                toggle1500 = !toggle1500;
-                if (toggle1500) toggle1220 = false; // Turn off the other speed
-            }
-            lastLB = gamepad2.left_bumper;
 
-            // Toggle for 1220 (Right Bumper)
-            if (gamepad2.right_bumper && !lastRB) {
-                toggle1220 = !toggle1220;
-                if (toggle1220) toggle1500 = false; // Turn off the other speed
-            }
-            lastRB = gamepad2.right_bumper;
-
-            // Velocity Logic
-            if (gamepad2.right_stick_y < -0.5 || toggle1500) {
-                shooterWheel.setVelocity(-1500);
-            } else if (gamepad2.right_stick_y > 0.5 || toggle1220) {
-                shooterWheel.setVelocity(-1300);
-            } else {
-                shooterWheel.setVelocity(0);
-            }
-
-            //////////////////////////////////////////////////////////////////////////////////////
-//            if(gamepad2.right_stick_y < -0.5){
-//                shooterWheel.setVelocity(-1200);
-//            } else {
-//                shooterWheel.setVelocity(0);
-//            }
-
-
-            // Gamepad2 right stick y runs intake
-            intake.setPower(-gamepad2.left_stick_y); //-gamepad2.left_stick_y/3
-
-            // Gamepad2 y moves the kick-up
-            if(gamepad2.y){
-                kickUp.setPosition(0.32);
-            } else {
-                kickUp.setPosition(0.22);
-            }
-
-            // Gamepad x kicks in the third ball
-            if(gamepad2.x){
-                thirdBallKick.setPosition(0.5);
-            } else {
-                thirdBallKick.setPosition(0.9);
-            }
-
-            // Gamepad a opens the door
-            if (gamepad2.a && !previousA) {
-                doorOpen = !doorOpen; // Switch the state
-            }
-            previousA = gamepad2.a; // Update previous state
-            // Set position based on the toggle
-            if (doorOpen) {
-                shooterDoor.setPosition(0.58);
-            } else {
-                shooterDoor.setPosition(0.7);
-            }
-
-            //Ascension logic
-            if(gamepad1.y){
-                leftAscend.setPower(-1.0);
-                rightAscend.setPower(-1.0);
-                telemetry.addLine("Ascending!");
-            } else if (gamepad1.b){
-                leftAscend.setPower(1.0);
-                rightAscend.setPower(1.0);
-                telemetry.addLine("Descending! WATCH OUT!");
-            } else if (gamepad1.a || gamepad1.y && gamepad1.left_bumper){
-                leftAscend.setPower(0.3);
-                rightAscend.setPower(0.3);
-                telemetry.addLine("Descending SLOWLY! WATCH OUT!");
-            } else {
-                leftAscend.setPower(0);
-                rightAscend.setPower(0);
-                telemetry.addLine("Not ascending or descending...");
-            }
-
-            telemetry.addData("wheel ticks", shooterWheel.getVelocity());
-
-        }
+        
     }
 }
