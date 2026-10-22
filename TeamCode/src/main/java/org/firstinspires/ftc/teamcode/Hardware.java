@@ -21,9 +21,33 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 public abstract class Hardware extends LinearOpMode {
-
+    BHI260IMU imu;
+    DcMotorEx frontLeft;
+    DcMotorEx frontRight;
+    DcMotorEx backLeft;
+    DcMotorEx backRight;
+    DcMotorEx shooter;
+    DcMotorEx intake;
+    Servo rightFlower;
+    Servo leftFlower;
+    Servo midSpin;
+    
+    
 
     public void initHardware() {
+        
+        frontLeft = (DcMotorEx) hardwareMap.dcMotor.get("frontLeft");
+        frontRight = (DcMotorEx) hardwareMap.dcMotor.get("frontRight");
+        backLeft = (DcMotorEx) hardwareMap.dcMotor.get("backLeft");
+        backRight = (DcMotorEx) hardwareMap.dcMotor.get("backRight");
+        shooter = (DcMotorEx) hardwareMap.dcMotor.get("shooter");
+        intake = (DcMotorEx) hardwareMap.dcMotor.get("intake");
+        rightFlower = hardwareMap.get(Servo.class, "rightFlower");
+        leftFlower = hardwareMap.get(Servo.class, "leftFlower");
+        midSpin = hardwareMap.get(Servo.class, "midSpin"); 
+
+
+        waitForStart();
 
     }
 }
