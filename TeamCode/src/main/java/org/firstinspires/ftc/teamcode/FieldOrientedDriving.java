@@ -138,9 +138,32 @@ public class FieldOrientedDriving extends Hardware {
 
             double speedModifier = 1.0; //Default Speed
 
-if(gamepad2.b){
-    midSpin.setpower(0.5);
-}else
-        
-    }
-}
+        boolean BWasPressed = false;
+        boolean BPressed = gamepad1.b;
+        if(BPressed && !BWasPressed) {
+            BWasPresed = true;
+        }else if(BPressed && BWasPressed){
+            BWasPressed= false;
+        }
+        if(BWasPressed){
+            midSpin.setpower(0.5);
+        }else{
+            midSpin.setpower(0.0);
+        }
+
+        boolean AWasPressed = false;
+        boolean APressed = gamepad1.a;
+        if(Apressed && !AWasPressed) {
+            AWasPresed = true;
+        }else if(APressed && AWasPressed){
+            AWasPressed= false;
+        }
+        if(AWasPressed){
+            rightFlower.setpower(-0.5);
+            leftFlower.setpower(0.5)
+        }else{
+            rightFlower.setpower(0.0);
+            leftFlower.setpower(0.0)
+            
+        }
+            
