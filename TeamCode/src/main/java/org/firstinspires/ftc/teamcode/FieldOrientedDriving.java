@@ -138,9 +138,9 @@ public class FieldOrientedDriving extends Hardware {
 
             double speedModifier = 1.0; //Default Speed
 
-
-
-
+if(gamepad2.b){
+    midSpin.setpower(0.5);
+}else
         
     }
 }
