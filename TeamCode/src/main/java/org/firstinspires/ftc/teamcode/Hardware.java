@@ -1,124 +1,128 @@
+
 package org.firstinspires.ftc.teamcode;
 
-import androidx.annotation.NonNull;
-
-import com.qualcomm.hardware.bosch.BHI260IMU;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotor.RunMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.RobotLog;
-
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import com.qualcomm.robotcore.util.ElapsedTime;
-
 
 public abstract class Hardware extends LinearOpMode {
-    BHI260IMU imu;
+
+    // IMU
+    IMU imu;
+
+    // Drivetrain
     DcMotorEx frontLeft;
     DcMotorEx frontRight;
     DcMotorEx backLeft;
     DcMotorEx backRight;
-    DcMotorEx shooter;
+
+    // Mechanisms
     DcMotorEx intake;
-    Servo rightFlower;
-    Servo leftFlower;
-    Servo midSpin;
-    
-    
+    DcMotorEx shooter;
 
+    // Continuous rotation servos
+    CRServo rightFlower;
+    CRServo leftFlower;
+    CRServo midSpin;
+
+
+    // Initialize hardware
     public void initHardware() {
-        
-        frontLeft = (DcMotorEx) hardwareMap.dcMotor.get("frontLeft");
-        frontRight = (DcMotorEx) hardwareMap.dcMotor.get("frontRight");
-        backLeft = (DcMotorEx) hardwareMap.dcMotor.get("backLeft");
-        backRight = (DcMotorEx) hardwareMap.dcMotor.get("backRight");
-        shooter = (DcMotorEx) hardwareMap.dcMotor.get("shooter");
-        intake = (DcMotorEx) hardwareMap.dcMotor.get("intake");
-        rightFlower = hardwareMap.get(Servo.class, "rightFlower");
-        leftFlower = hardwareMap.get(Servo.class, "leftFlower");
-        midSpin = hardwareMap.get(Servo.class, "midSpin"); 
 
+        // Drivetrain
+        frontLeft = hardwareMap.get(DcMotorEx.class, "frontLeft");
+        frontRight = hardwareMap.get(DcMotorEx.class, "frontRight");
+        backLeft = hardwareMap.get(DcMotorEx.class, "backLeft");
+        backRight = hardwareMap.get(DcMotorEx.class, "backRight");
 
-        waitForStart();
+        // Mechanisms
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
+        shooter = hardwareMap.get(DcMotorEx.class, "shooter");
+
+        // Servos
+        rightFlower = hardwareMap.get(CRServo.class, "rightFlower");
+        leftFlower = hardwareMap.get(CRServo.class, "leftFlower");
+        midSpin = hardwareMap.get(CRServo.class, "midSpin");
+
+        // Drivetrain braking
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        // Drivetrain run modes
+        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        // Mechanism run modes
+        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        shooter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        // IMU initialization will be added after confirming
+        // the exact Control Hub mounting orientation.
+        imu = hardwareMap.get(IMU.class, "imu");
 
     }
 
-        // stop moving
+
+    // Stop drivetrain
     public void stopMoving() {
-        frontRight.setPower(0);
         frontLeft.setPower(0);
-        backRight.setPower(0);
+        frontRight.setPower(0);
         backLeft.setPower(0);
+        backRight.setPower(0);
     }
 
-    // We can have the go backwards be negative power
-    // forward -> use positive power
-    // backward -> use negative power
+
+    // Forward and backward
     public void moveY(double power) {
+        frontLeft.setPower(power);
         frontRight.setPower(power);
-        frontLeft.setPower(power);
-        backRight.setPower(power);
         backLeft.setPower(power);
-    }
-
-    // its the same thing as moveY. Positive power is going to be right and negative is left
-    // right -> positive power
-    // left -> negative power
-    public void moveX(double power) {
-        frontRight.setPower(-power);
-        frontLeft.setPower(power);
         backRight.setPower(power);
+    }
+
+
+    // Strafing
+    public void moveX(double power) {
+        frontLeft.setPower(power);
+        frontRight.setPower(-power);
         backLeft.setPower(-power);
-    }
-     public void goPark(){
-
-
-        //move back
-        moveY(.2);
-        sleep(500);
-
-        //move to side of field with parking
-        moveX(-0.5);
-        sleep(4500);
-
-        //park
-        moveY(.3);
-        sleep(2000);
-
-//        moveY(-0.2);
-//        sleep(300);
+        backRight.setPower(power);
     }
 
-    public void rotateBot(int sleep, boolean clockwise){
-        int clockwiseNumber;
-        if (clockwise == true){
-            clockwiseNumber = 1;
-        } else {
-            clockwiseNumber = -1;
-        }
-        frontLeft.setPower(0.5 * clockwiseNumber);
-        backLeft.setPower(0.5 * clockwiseNumber);
-        frontRight.setPower(-0.5 * clockwiseNumber);
-        backRight.setPower(-0.5 * clockwiseNumber);
-        sleep(sleep);
 
-        frontLeft.setPower(0);
-        backLeft.setPower(0);
-        frontRight.setPower(0);
-        backRight.setPower(0);
+    // Rotate robot
+    public void rotateBot(int duration, boolean clockwise) {
 
+        double power = clockwise ? 0.5 : -0.5;
+
+        frontLeft.setPower(power);
+        backLeft.setPower(power);
+        frontRight.setPower(-power);
+        backRight.setPower(-power);
+
+        sleep(duration);
+
+        stopMoving();
     }
 
-        
-        
-    
-    
-    
+
+    // Stop all mechanisms
+    public void stopMechanisms() {
+        intake.setPower(0);
+        shooter.setPower(0);
+
+        rightFlower.setPower(0);
+        leftFlower.setPower(0);
+        midSpin.setPower(0);
+    }
+
+}
