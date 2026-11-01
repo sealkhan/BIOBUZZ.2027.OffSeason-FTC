@@ -1,169 +1,193 @@
+
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.RobotLog;
-
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-
 
 @TeleOp(name = "Field Oriented Driving")
 public class FieldOrientedDriving extends Hardware {
-    public static double powerCurve(double power, boolean slowSpeed) {
-        if (slowSpeed)
-            return power / 8.0; // In slow speed move with 1/8 of the max power <- to make it slower, make denominator bigger/xfwri
-        else
-            return power / 3.0; // regular power
-    }
-
-//    public void initArmMotorSimple(DcMotorEx motor) {
-//        motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        motor.setPower(0.0);
-//        motor.setTargetPosition(0);
-//        motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//    }
 
     @Override
     public void runOpMode() {
+
         initHardware();
 
-        boolean previousX = false;
-        boolean emergencyDrive = false; // activates arm motor control
-        boolean previousY = false;
-        boolean previousA = false;
-        boolean doorOpen = false;
-        boolean toggle1500 = false;
-        boolean lastLB = false;
-        boolean toggle1220 = false;
-        boolean lastRB = false;
+        // Driving mode
+        boolean fieldOriented = true;
+        boolean previousDriveToggle = false;
 
+        // Mechanism toggle states
+        boolean intakeOn = false;
+        boolean midSpinOn = false;
+        boolean rightFlowerOn = false;
+        boolean leftFlowerOn = false;
+        boolean shooterOn = false;
+
+        // Previous button states
+        boolean previousA = false;
+        boolean previousB = false;
+        boolean previousX = false;
+        boolean previousY = false;
+        boolean previousRB = false;
+
+        telemetry.addLine("Hardware initialized");
+        telemetry.addLine("Waiting for start");
+        telemetry.update();
+
+        waitForStart();
+
+        if (isStopRequested()) {
+            return;
+        }
+
+        // Reset heading at start
+        imu.resetYaw();
 
         while (opModeIsActive()) {
-            boolean slowSpeed = gamepad1.left_bumper; // when pressed, slow down robot
-            // X presses
-            boolean x = gamepad1.x;
-            if (!x & previousX) {
-                emergencyDrive = !emergencyDrive; // toggle emergency drive
+
+            // =================================
+            // GAMEPAD 1 - DRIVETRAIN
+            // =================================
+
+            // Toggle field-oriented / robot-oriented
+            boolean driveToggle = gamepad1.x;
+
+            if (driveToggle && !previousDriveToggle) {
+                fieldOriented = !fieldOriented;
             }
-            previousX = x;
 
-            //EMERGENCY DRIVE AND FIELD ORIENTED
-            if (emergencyDrive){
-                // Y stick is reversed
+            previousDriveToggle = driveToggle;
 
-                float y = -gamepad1.right_stick_y;
-                telemetry.addData("y: ", y);
-                float X = gamepad1.right_stick_x;
-                telemetry.addData("x: ", X);
-                float rx = gamepad1.left_stick_x;
-                telemetry.addData("rx: ", rx);
-                RobotLog.v(String.valueOf(y));
-                RobotLog.v(String.valueOf(X));
-                RobotLog.v(String.valueOf(rx));
+            // Speed control
+            double speedModifier;
 
-                // there's a divide by two in these in order to make the power smaller
-                // if you want to make the power smaller, then make the '2' higher
-                // if you want it stronger make it lower or remove the division by two
-                double dividedBy = 2;
-                if (gamepad1.right_bumper){
-                    dividedBy = 0.5;
-                } else if (gamepad1.left_bumper){
-                    dividedBy = 6;
-                }
-
-                frontLeft.setPower((y + X + rx) / dividedBy);
-                telemetry.addData("front left: ", (y + X + rx) / dividedBy);
-
-                backLeft.setPower(((y - X) + rx) / dividedBy);
-                telemetry.addData("back left: ", ((y - X) + rx) / dividedBy);
-
-                frontRight.setPower(((y - X) - rx) / dividedBy);
-                telemetry.addData("front right: ", ((y - X) - rx) / dividedBy);
-
-                backRight.setPower(((y + X) - rx) / dividedBy);
-                telemetry.addData("back right: ", (y - X - rx) / dividedBy);
-
+            if (gamepad1.left_bumper) {
+                speedModifier = 0.125; // Slow
+            } else if (gamepad1.right_bumper) {
+                speedModifier = 0.75; // Fast
             } else {
-
-                double rightStickY = powerCurve(-gamepad1.right_stick_y, slowSpeed); // input range is -1..+1
-                double rightStickX = powerCurve(gamepad1.right_stick_x, slowSpeed); // ditto
-                double leftStickX = powerCurve(gamepad1.left_stick_x, slowSpeed); // ditto
-                telemetry.addData("left stick x: ", gamepad1.left_stick_x);
-                telemetry.addData("thought left stick x: ", leftStickX);
-
-                // Read sensor data
-                YawPitchRollAngles robotOrientation = imu.getRobotYawPitchRollAngles();
-                double yaw = robotOrientation.getYaw(AngleUnit.RADIANS);
-
-                double rotX = rightStickX * Math.cos(-yaw) - rightStickY * Math.sin(-yaw);
-                double rotY = rightStickX * Math.sin(-yaw) + rightStickY * Math.cos(-yaw);
-
-                // Denominator is the largest motor power (absolute value) or 1
-                // This ensures all the powers maintain the same ratio,
-                // but only if at least one is out of the range [-1, 1]
-
-                double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(leftStickX), 1);
-                if (gamepad1.right_bumper) {
-                    denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(leftStickX), 1) / 2;
-                }
-
-
-                double frontLeftPower = (rotY + rotX + leftStickX) / denominator;
-                double backLeftPower = (rotY - rotX + leftStickX) / denominator;
-                double frontRightPower = (rotY - rotX - leftStickX) / denominator;
-                double backRightPower = (rotY + rotX - leftStickX) / denominator;
-
-                frontLeft.setPower(frontLeftPower);
-                telemetry.addData("frontLeftPower: ", frontLeftPower);
-
-                backLeft.setPower(backLeftPower);
-                telemetry.addData("backLeftPower: ", backLeftPower);
-
-                frontRight.setPower(frontRightPower);
-                telemetry.addData("frontRightPower: ", frontRightPower);
-
-                backRight.setPower(backRightPower);
-                telemetry.addData("backRightPower: ", backRightPower);
-
-                telemetry.addData("yaw", yaw);
+                speedModifier = 1.0 / 3.0; // Normal
             }
 
-            // adds to the telemetry which mode the robot is in
-            if (emergencyDrive) {
-                telemetry.addData("mode", "Emergency Driving");
-            } else {
-                telemetry.addData("mode", "Field Oriented Driving");
+            // Joystick inputs
+            double y = -gamepad1.right_stick_y * speedModifier;
+            double x = gamepad1.right_stick_x * speedModifier;
+            double rotation = gamepad1.left_stick_x * speedModifier;
+
+            // IMU heading
+            YawPitchRollAngles orientation =
+                    imu.getRobotYawPitchRollAngles();
+
+            double yaw = orientation.getYaw(AngleUnit.RADIANS);
+
+            // Field-oriented transformation
+            double rotX = x;
+            double rotY = y;
+
+            if (fieldOriented) {
+                rotX = x * Math.cos(-yaw) - y * Math.sin(-yaw);
+                rotY = x * Math.sin(-yaw) + y * Math.cos(-yaw);
             }
 
-            double speedModifier = 1.0; //Default Speed
+            // Mecanum wheel calculations
+            double frontLeftPower =
+                    rotY + rotX + rotation;
 
-        boolean BWasPressed = false;
-        boolean BPressed = gamepad1.b;
-        if(BPressed && !BWasPressed) {
-            BWasPresed = true;
-        }else if(BPressed && BWasPressed){
-            BWasPressed= false;
-        }
-        if(BWasPressed){
-            midSpin.setpower(0.5);
-        }else{
-            midSpin.setpower(0.0);
+            double backLeftPower =
+                    rotY - rotX + rotation;
+
+            double frontRightPower =
+                    rotY - rotX - rotation;
+
+            double backRightPower =
+                    rotY + rotX - rotation;
+
+            // Normalize motor powers
+            double denominator = Math.max(
+                    Math.max(Math.abs(frontLeftPower),
+                    Math.abs(backLeftPower)),
+                    Math.max(Math.abs(frontRightPower),
+                    Math.abs(backRightPower))
+            );
+
+            denominator = Math.max(denominator, 1.0);
+
+            frontLeft.setPower(frontLeftPower / denominator);
+            backLeft.setPower(backLeftPower / denominator);
+            frontRight.setPower(frontRightPower / denominator);
+            backRight.setPower(backRightPower / denominator);
+
+
+            // =================================
+            // GAMEPAD 2 - MECHANISMS
+            // =================================
+
+            // A - Intake motor
+            if (gamepad2.a && !previousA) {
+                intakeOn = !intakeOn;
+            }
+            previousA = gamepad2.a;
+
+            intake.setPower(intakeOn ? 1.0 : 0.0);
+
+
+            // B - Mid spinner
+            if (gamepad2.b && !previousB) {
+                midSpinOn = !midSpinOn;
+            }
+            previousB = gamepad2.b;
+
+            midSpin.setPower(midSpinOn ? 1.0 : 0.0);
+
+
+            // X - Right flower
+            if (gamepad2.x && !previousX) {
+                rightFlowerOn = !rightFlowerOn;
+            }
+            previousX = gamepad2.x;
+
+            rightFlower.setPower(rightFlowerOn ? 1.0 : 0.0);
+
+
+            // Y - Left flower
+            if (gamepad2.y && !previousY) {
+                leftFlowerOn = !leftFlowerOn;
+            }
+            previousY = gamepad2.y;
+
+            leftFlower.setPower(leftFlowerOn ? 1.0 : 0.0);
+
+
+            // Right bumper - Shooter
+            if (gamepad2.right_bumper && !previousRB) {
+                shooterOn = !shooterOn;
+            }
+            previousRB = gamepad2.right_bumper;
+
+            shooter.setPower(shooterOn ? 1.0 : 0.0);
+
+
+            // =================================
+            // TELEMETRY
+            // =================================
+
+            telemetry.addData("Driving Mode",
+                    fieldOriented ? "Field Oriented" : "Robot Oriented");
+
+            telemetry.addData("Heading", yaw);
+
+            telemetry.addData("Intake", intakeOn ? "ON" : "OFF");
+            telemetry.addData("Mid Spinner", midSpinOn ? "ON" : "OFF");
+            telemetry.addData("Right Flower", rightFlowerOn ? "ON" : "OFF");
+            telemetry.addData("Left Flower", leftFlowerOn ? "ON" : "OFF");
+            telemetry.addData("Shooter", shooterOn ? "ON" : "OFF");
+
+            telemetry.update();
         }
 
-        boolean AWasPressed = false;
-        boolean APressed = gamepad1.a;
-        if(Apressed && !AWasPressed) {
-            AWasPresed = true;
-        }else if(APressed && AWasPressed){
-            AWasPressed= false;
-        }
-        if(AWasPressed){
-            rightFlower.setpower(-0.5);
-            leftFlower.setpower(0.5)
-        }else{
-            rightFlower.setpower(0.0);
-            leftFlower.setpower(0.0)
-            
-        }
-            
+        // Stop everything when OpMode ends
+        stopMoving();
+        stopMechanisms();
+    }
+}
