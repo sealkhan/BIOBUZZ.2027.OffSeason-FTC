@@ -1,34 +1,38 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.IMU;
 
 public abstract class Hardware extends LinearOpMode {
 
     // IMU
-    IMU imu;
+    protected IMU imu;
 
-    // Drivetrain
-    DcMotorEx frontLeft;
-    DcMotorEx frontRight;
-    DcMotorEx backLeft;
-    DcMotorEx backRight;
+    // Drivetrain motors
+    protected DcMotorEx frontLeft;
+    protected DcMotorEx frontRight;
+    protected DcMotorEx backLeft;
+    protected DcMotorEx backRight;
 
-    // Mechanisms
-    DcMotorEx intake;
-    DcMotorEx shooter;
+    // Mechanism motors
+    protected DcMotorEx intake;
+    protected DcMotorEx shooter;
 
     // Continuous rotation servos
-    CRServo rightFlower;
-    CRServo leftFlower;
-    CRServo midSpin;
+    protected CRServo rightFlower;
+    protected CRServo leftFlower;
+    protected CRServo midSpin;
 
 
-    // Initialize hardware
+    // =================================
+    // INITIALIZE HARDWARE
+    // =================================
+
     public void initHardware() {
 
         // Drivetrain
@@ -37,42 +41,53 @@ public abstract class Hardware extends LinearOpMode {
         backLeft = hardwareMap.get(DcMotorEx.class, "backLeft");
         backRight = hardwareMap.get(DcMotorEx.class, "backRight");
 
-        // Mechanisms
+        // Mechanism motors
         intake = hardwareMap.get(DcMotorEx.class, "intake");
         shooter = hardwareMap.get(DcMotorEx.class, "shooter");
 
-        // Servos
+        // Continuous rotation servos
         rightFlower = hardwareMap.get(CRServo.class, "rightFlower");
         leftFlower = hardwareMap.get(CRServo.class, "leftFlower");
         midSpin = hardwareMap.get(CRServo.class, "midSpin");
 
-        // Drivetrain braking
+
+        // Set motor zero-power behavior
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        // Drivetrain run modes
+        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+        // Set drivetrain modes
         frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // Mechanism run modes
-        intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
+        // Set mechanism motor modes
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shooter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        // IMU initialization will be added after confirming
-        // the exact Control Hub mounting orientation.
+
+        // Initialize IMU
         imu = hardwareMap.get(IMU.class, "imu");
 
+        imu.initialize(new IMU.Parameters(
+                new RevHubOrientationOnRobot(
+                        RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
+                        RevHubOrientationOnRobot.UsbFacingDirection.UP
+                )
+        ));
     }
 
 
-    // Stop drivetrain
+    // =================================
+    // DRIVETRAIN FUNCTIONS
+    // =================================
+
     public void stopMoving() {
         frontLeft.setPower(0);
         frontRight.setPower(0);
@@ -81,7 +96,6 @@ public abstract class Hardware extends LinearOpMode {
     }
 
 
-    // Forward and backward
     public void moveY(double power) {
         frontLeft.setPower(power);
         frontRight.setPower(power);
@@ -90,7 +104,6 @@ public abstract class Hardware extends LinearOpMode {
     }
 
 
-    // Strafing
     public void moveX(double power) {
         frontLeft.setPower(power);
         frontRight.setPower(-power);
@@ -99,23 +112,18 @@ public abstract class Hardware extends LinearOpMode {
     }
 
 
-    // Rotate robot
-    public void rotateBot(int duration, boolean clockwise) {
-
-        double power = clockwise ? 0.5 : -0.5;
-
+    public void rotateBot(double power) {
         frontLeft.setPower(power);
         backLeft.setPower(power);
         frontRight.setPower(-power);
         backRight.setPower(-power);
-
-        sleep(duration);
-
-        stopMoving();
     }
 
 
-    // Stop all mechanisms
+    // =================================
+    // MECHANISM FUNCTIONS
+    // =================================
+
     public void stopMechanisms() {
         intake.setPower(0);
         shooter.setPower(0);
@@ -125,4 +133,13 @@ public abstract class Hardware extends LinearOpMode {
         midSpin.setPower(0);
     }
 
+
+    // =================================
+    // STOP ALL MOTORS AND SERVOS
+    // =================================
+
+    public void stopAll() {
+        stopMoving();
+        stopMechanisms();
+    }
 }
