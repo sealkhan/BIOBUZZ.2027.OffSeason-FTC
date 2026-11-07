@@ -106,9 +106,9 @@ public class FieldOrientedDriving extends Hardware {
             // Normalize motor powers
             double denominator = Math.max(
                     Math.max(Math.abs(frontLeftPower),
-                    Math.abs(backLeftPower)),
+                            Math.abs(backLeftPower)),
                     Math.max(Math.abs(frontRightPower),
-                    Math.abs(backRightPower))
+                            Math.abs(backRightPower))
             );
 
             denominator = Math.max(denominator, 1.0);
@@ -132,16 +132,16 @@ public class FieldOrientedDriving extends Hardware {
             intake.setPower(intakeOn ? 1.0 : 0.0);
 
 
-            // B - Mid spinner
+            // B - Mid spinner CRServo
             if (gamepad2.b && !previousB) {
                 midSpinOn = !midSpinOn;
             }
             previousB = gamepad2.b;
 
-            midSpin.setPower(midSpinOn ? 1.0 : 0.0);
+            midSpin.setPower(midSpinOn ? 0.7 : 0.0);
 
 
-            // X - Right flower
+            // X - Right flower CRServo
             if (gamepad2.x && !previousX) {
                 rightFlowerOn = !rightFlowerOn;
             }
@@ -150,7 +150,7 @@ public class FieldOrientedDriving extends Hardware {
             rightFlower.setPower(rightFlowerOn ? 1.0 : 0.0);
 
 
-            // Y - Left flower
+            // Y - Left flower CRServo
             if (gamepad2.y && !previousY) {
                 leftFlowerOn = !leftFlowerOn;
             }
@@ -159,13 +159,13 @@ public class FieldOrientedDriving extends Hardware {
             leftFlower.setPower(leftFlowerOn ? 1.0 : 0.0);
 
 
-            // Right bumper - Shooter
+            // Right bumper - Shooter motor
             if (gamepad2.right_bumper && !previousRB) {
                 shooterOn = !shooterOn;
             }
             previousRB = gamepad2.right_bumper;
 
-            shooter.setPower(shooterOn ? 1.0 : 0.0);
+            shooter.setPower(shooterOn ? 0.6 : 0.0);
 
 
             // =================================
